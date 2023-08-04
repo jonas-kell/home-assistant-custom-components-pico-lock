@@ -1,0 +1,10 @@
+{
+    "python.linting.enabled": true,
+    "python.languageServer": "Pylance",
+    "python.analysis.typeCheckingMode": "basic",
+    "python.analysis.typeshedPaths": [".vscode/Pico-W-Stub"],
+    "python.analysis.extraPaths": [".vscode/Pico-W-Stub/stubs"],
+    "cSpell.words": ["Micropython", "Pico"],
+    "micropico.syncFolder": "pico-code",
+    "micropico.syncFileTypes": ["py", "txt", "log", "json", "xml", "html", "js", "css", "mpy", "env"]
+}

@@ -1,0 +1,8 @@
+{
+    "name": "Pico Lock",
+    "content_in_root": false,
+    "render_readme": false,
+    "hacs": "1.6.0",
+    "domains": ["lock"],
+    "homeassistant": "2023.1.0"
+}
