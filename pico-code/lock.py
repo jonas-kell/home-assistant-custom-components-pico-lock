@@ -7,11 +7,11 @@ gpionr = int(getEnvValue("gpionr"))
 
 # init stuff (default high)
 pin = Pin(gpionr, Pin.OUT)
-pin.high()
+pin.low()
 
 
 def triggerUnlock():
-    print(f"Triggering the opening of the lock by setting Pin {gpionr} low.")
-    pin.low()
-    sleep(0.2)
+    print(f"Triggering the opening of the lock by setting Pin {gpionr} high.")
     pin.high()
+    sleep(0.2)
+    pin.low()
