@@ -45,12 +45,12 @@ def setup_platform(
     # The configuration check takes care they are present.
 
     devices = []
-    for device_id, device_config in config[CONF_DEVICES].items():
+    for unique_id, device_config in config[CONF_DEVICES].items():
         name = device_config[CONF_NAME]
         ip_address = device_config[CONF_IP_ADDRESS]
 
         pico = RaspberryPiPico(
-            device_id, name, ip_address
+            unique_id, name, ip_address
         )
 
         # Verify that passed in configuration works
@@ -72,9 +72,9 @@ class RaspberryPiPico:
     """Controls Connection to a RaspberriPi Pico with custom firmware"""
 
     def __init__(
-        self, device_id, name, ip_address
+        self, unique_id, name, ip_address
     ) -> None:
-        self._device_id = device_id
+        self._attr_unique_id = unique_id
         self._name = name
         self._ip_address = ip_address
 
