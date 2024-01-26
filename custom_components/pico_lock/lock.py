@@ -74,7 +74,7 @@ class RaspberryPiPico:
     def __init__(
         self, unique_id, name, ip_address
     ) -> None:
-        self._attr_unique_id = unique_id
+        self._unique_id = unique_id
         self._name = name
         self._ip_address = ip_address
 
@@ -151,9 +151,8 @@ class PicoLock(LockEntity):
     _attr_changed_by = "Default trigger"
 
     def __init__(self, pico: RaspberryPiPico) -> None:
-        """Initialize a Lightable Pico Subsection"""
         self._pico = pico
-        self._device_id = pico._device_id
+        self._attr_unique_id = pico._unique_id
         self._name = pico._name
 
     @property
