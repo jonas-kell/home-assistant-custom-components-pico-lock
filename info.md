@@ -1,4 +1,4 @@
-# HomeAssistant Custom Components Room Led Strip
+# HomeAssistant Custom Components Pico Lock
 
 Pico-driven Lock Integration. Install it via HACS.
 
