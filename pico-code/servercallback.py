@@ -21,7 +21,7 @@ def callback(method, url):
             return '{"status": "success"} \n'
         if url == "/get_nonce":
             nonce = generate_nonce()
-            return f'{{"status": "success", "nonce": {nonce}}} \n'
+            return f'{{"status": "success", "nonce": "{nonce}"}} \n'
 
     if method == "POST":
         if url == "/open":
