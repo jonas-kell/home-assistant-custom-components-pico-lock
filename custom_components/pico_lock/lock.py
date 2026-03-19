@@ -21,6 +21,8 @@ _LOGGER = logging.getLogger(__name__)
 
 DOMAIN: Final = "pico_lock"
 
+CONF_SECRET: Final = "secret"
+
 # Validation of the user's configuration
 PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend(
     {
@@ -29,12 +31,15 @@ PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend(
                 cv.string: {
                     vol.Required(CONF_NAME): cv.string,
                     vol.Required(CONF_IP_ADDRESS): cv.string,
+                    vol.Required(CONF_SECRET): cv.string,
                 }
             }
         ),
     }
 )
 
+
+### signatures crypto
 
 import hmac
 import hashlib
@@ -46,6 +51,9 @@ def hmac_sha256(key_str: str, msg_str):
     ).hexdigest()
 
     return sig
+
+
+### signatures crypto end
 
 
 def setup_platform(
@@ -61,8 +69,9 @@ def setup_platform(
     for unique_id, device_config in config[CONF_DEVICES].items():
         name = device_config[CONF_NAME]
         ip_address = device_config[CONF_IP_ADDRESS]
+        secret = device_config[CONF_SECRET]
 
-        pico = RaspberryPiPico(unique_id, name, ip_address)
+        pico = RaspberryPiPico(unique_id, name, ip_address, secret)
 
         # Verify that passed in configuration works
         if not pico.assert_can_connect():
@@ -70,7 +79,7 @@ def setup_platform(
                 f"Could not connect to RaspberryPi Pico with custom firmware (ip: {ip_address})"
             )
 
-        _LOGGER.info(f"appended device")
+        _LOGGER.info("appended device")
 
         # append to devices array
         devices.append(pico)
@@ -84,29 +93,41 @@ def setup_platform(
 class RaspberryPiPico:
     """Controls Connection to a RaspberriPi Pico with custom firmware"""
 
-    def __init__(self, unique_id, name, ip_address) -> None:
+    def __init__(self, unique_id, name, ip_address, secret) -> None:
         self._unique_id = unique_id
         self._name = name
         self._ip_address = ip_address
+        self._secret = secret
 
     def assert_can_connect(self) -> bool:
-        ok, response = self.request("check_connect", {}, "get", False)
+        ok, _response = self.request("check_connect", {}, "get", False)
 
         if ok:
-            _LOGGER.info(f"Asserted that Pico can connect")
+            _LOGGER.info("Asserted that Pico can connect")
             return True
 
         return False
 
     def unlock(self):
-        ok, response = self.request(
-            "open",
+        ok_nonce, response_nonce = self.request("get_nonce", {}, "get")
+
+        if not ok_nonce:
+            _LOGGER.error("Nonce request failed")
+            return False
+
+        nonce = response_nonce.get("nonce")
+        if nonce is None:
+            _LOGGER.error("Nonce not provided")
+            return False
+
+        ok, _response = self.request(
+            f"open?signature={hmac_sha256(self._secret, nonce)}",
             {},
             "post",
         )
 
         if ok:
-            _LOGGER.info(f"Lock opened")
+            _LOGGER.info("Lock opened")
             return True
 
         return False
@@ -115,13 +136,11 @@ class RaspberryPiPico:
         try:
             if method == "get":
                 r = requests.get(
-                    url=f"http://{self._ip_address}/{route}",
-                    params=params,
+                    url=f"http://{self._ip_address}/{route}", params=params, timeout=10
                 )
             elif method == "post":
                 r = requests.post(
-                    url=f"http://{self._ip_address}/{route}",
-                    params=params,
+                    url=f"http://{self._ip_address}/{route}", params=params, timeout=10
                 )
             else:
                 raise ValueError
