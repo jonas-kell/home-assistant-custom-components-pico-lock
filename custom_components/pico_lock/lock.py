@@ -1,4 +1,5 @@
 """Platform for lock integration."""
+
 from __future__ import annotations
 
 import logging
@@ -35,6 +36,18 @@ PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend(
 )
 
 
+import hmac
+import hashlib
+
+
+def hmac_sha256(key_str: str, msg_str):
+    sig = hmac.new(
+        key_str.strip().encode("utf-8"), msg_str.encode("utf-8"), hashlib.sha256
+    ).hexdigest()
+
+    return sig
+
+
 def setup_platform(
     hass: HomeAssistant,
     config: ConfigType,
@@ -49,14 +62,14 @@ def setup_platform(
         name = device_config[CONF_NAME]
         ip_address = device_config[CONF_IP_ADDRESS]
 
-        pico = RaspberryPiPico(
-            unique_id, name, ip_address
-        )
+        pico = RaspberryPiPico(unique_id, name, ip_address)
 
         # Verify that passed in configuration works
         if not pico.assert_can_connect():
-            raise PlatformNotReady(f"Could not connect to RaspberryPi Pico with custom firmware (ip: {ip_address})")
-        
+            raise PlatformNotReady(
+                f"Could not connect to RaspberryPi Pico with custom firmware (ip: {ip_address})"
+            )
+
         _LOGGER.info(f"appended device")
 
         # append to devices array
@@ -71,9 +84,7 @@ def setup_platform(
 class RaspberryPiPico:
     """Controls Connection to a RaspberriPi Pico with custom firmware"""
 
-    def __init__(
-        self, unique_id, name, ip_address
-    ) -> None:
+    def __init__(self, unique_id, name, ip_address) -> None:
         self._unique_id = unique_id
         self._name = name
         self._ip_address = ip_address
