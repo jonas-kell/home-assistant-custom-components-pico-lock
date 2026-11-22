@@ -1,4 +1,5 @@
 import socket
+from wlan import wlanConnect, wlanIsConnected
 
 
 # url_callback: provided function, that takes the following inputs:
@@ -7,61 +8,63 @@ import socket
 #
 #     and that returns the result-string to be echoed back to the client
 def startServer(ipv4, url_callback):
-    # HTTP-Server starten
-    if ipv4 != "":
+    keyboardInterrupt = False
+    while not keyboardInterrupt:
+
+        # HTTP-Server starten
         print("Start Server")
         addr = socket.getaddrinfo(ipv4, 80)[0][-1]
         server = socket.socket()
         server.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         server.bind(addr)
         server.listen(1)
+        server.settimeout(5)
         print("Server is listening to ", addr)
         print()
-        print("In interactive mode the server can be shut down with CTRL + C")
-        print()
 
-    # Auf eingehende Verbindungen hören
-    while True:
-        try:
-            conn, addr = server.accept()
-            print("HTTP-Request recieved from Client", addr)
-            request = conn.recv(1024)
-            request = str(request)
-            request = request.split()
+        # Auf eingehende Verbindungen hören
+        while wlanIsConnected():
+            try:
+                conn, addr = server.accept()
+                print("HTTP-Request recieved from Client", addr)
+                request = conn.recv(1024)
+                request = str(request)
+                request = request.split()
 
-            print(request)
+                print(request)
 
-            method = request[0].lstrip("'b")
-            url = request[1].lstrip("'b")
+                method = request[0].lstrip("'b")
+                url = request[1].lstrip("'b")
 
-            print("METHOD:", method)
-            print("URL:", url)
+                print("METHOD:", method)
+                print("URL:", url)
 
-            # Process by user defined function:
-            resp = url_callback(method, url)
+                # Process by user defined function:
+                resp = url_callback(method, url)
 
-            conn.send(
-                "HTTP/1.0 200 OK\r\nContent-type: application/json; charset=utf-8\r\n\r\n"
-            )
-            conn.send(resp)
-            conn.close()
+                conn.send(
+                    "HTTP/1.0 200 OK\r\nContent-type: application/json; charset=utf-8\r\n\r\n"
+                )
+                conn.send(resp)
+                conn.close()
 
-            print("Sent HTTP-Response")
-            print()
-        except OSError as e:
-            break
-        except KeyboardInterrupt:
-            break
+                print("Sent HTTP-Response")
+                print()
+            except OSError as _e:
+                # Timeout or connection lost
+                if not wlanIsConnected():
+                    print("WLAN Verbindung verloren")
+                    break
+            except KeyboardInterrupt:
+                keyboardInterrupt = True
+                server.close()
+                break
 
-    try:
-        conn.close()
-    except NameError:
-        pass
-    try:
         server.close()
-    except NameError:
-        pass
-    print("Server Exited")
+
+        if not keyboardInterrupt:
+            # Reconnect and restart server
+            ipv4 = wlanConnect()
 
 
 # //TODO more robust version that can decode urlencoded stuff.

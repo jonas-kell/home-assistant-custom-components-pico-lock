@@ -10,13 +10,11 @@ BLINK = True  # SET TO True FOR DEBUG
 
 blink(1, BLINK)
 
-ip4 = wlanConnect()
+ip4 = wlanConnect(True)
 sleep(0.1)
 
 if BLINK:
     if ip4 != "":
         blink(2, BLINK)
-    else:
-        blink(1, BLINK)
 
 startServer(ip4, callback)
